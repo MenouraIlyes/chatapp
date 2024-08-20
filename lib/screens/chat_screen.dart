@@ -9,10 +9,12 @@ import 'package:flutter/material.dart';
 class ChatScreen extends StatefulWidget {
   final String receiverEmail;
   final String receiverID;
+  final String receiverName;
   ChatScreen({
     super.key,
     required this.receiverEmail,
     required this.receiverID,
+    required this.receiverName,
   });
 
   @override
@@ -55,7 +57,7 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     // wait for the listview to be built, then scroll to bottom
-    Future.delayed(Duration(milliseconds: 500), () => scrollDown());
+    Future.delayed(Duration(milliseconds: 600), () => scrollDown());
   }
 
   @override
@@ -160,7 +162,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget getBody() {
     return Padding(
-      padding: const EdgeInsets.only(right: 10, left: 10),
+      padding: const EdgeInsets.only(right: 10, left: 10, bottom: 10),
       child: Column(
         children: [
           SizedBox(
@@ -185,7 +187,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.receiverEmail,
+          widget.receiverName,
           style: TextStyle(color: appWhite),
         ),
         centerTitle: true,

@@ -1,7 +1,9 @@
+import 'package:chatapp/screens/home_screen.dart';
 import 'package:chatapp/services/auth_service.dart';
 import 'package:chatapp/shared/colors.dart';
 import 'package:chatapp/widgets/custom_button.dart';
 import 'package:chatapp/widgets/custom_textfield.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -14,11 +16,13 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
   String emailText = '';
+  String nameText = '';
   String passwordText = '';
   String confirmPasswordText = '';
 
@@ -30,8 +34,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_passwordController.text == _confirmPasswordController.text) {
       // password match
       try {
-        await authService.signUpInwithEmailPassword(
-            _emailController.text, _passwordController.text);
+        User? user = await authService.signUpInwithEmailPassword(
+            _emailController.text,
+            _passwordController.text,
+            _nameController.text);
+
+        if (user != null) {
+          // If the user is successfully sign up, navigate to HomePage
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const HomeScreen(),
+            ),
+            (route) => false,
+          );
+        } else {
+          // Show an error message if login failed
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Login failed. Please check your credentials.'),
+            ),
+          );
+        }
       } catch (e) {
         showDialog(
           context: context,
@@ -67,6 +91,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
             SizedBox(
               height: 20,
             ),
+            // Name
+            CustomTextfield(
+              controller: _nameController,
+              labelText: 'Name',
+              noIcon: true,
+              onChanged: (value) {
+                setState(() {
+                  nameText = value;
+                });
+              },
+            ),
+            SizedBox(
+              height: 20,
+            ),
             // email
             CustomTextfield(
               controller: _emailController,
@@ -78,6 +116,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 });
               },
             ),
+
             SizedBox(
               height: 20,
             ),
