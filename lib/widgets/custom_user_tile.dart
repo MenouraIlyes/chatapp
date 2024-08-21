@@ -4,11 +4,15 @@ import 'package:flutter/material.dart';
 class CustomUserTile extends StatelessWidget {
   final String username;
   final void Function()? onTap;
+  final String lastMessage;
+  final String timestamp;
 
   const CustomUserTile({
     super.key,
     required this.username,
     required this.onTap,
+    this.lastMessage = '',
+    this.timestamp = '',
   });
 
   @override
@@ -33,7 +37,7 @@ class CustomUserTile extends StatelessWidget {
                   width: 50,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(100),
-                    child: Image.asset('assets/images/logo4.png'),
+                    child: Image.asset('assets/images/default_pfp.png'),
                   ),
                 ),
                 SizedBox(width: 10),
@@ -53,9 +57,9 @@ class CustomUserTile extends StatelessWidget {
                           ),
                         ),
 
-                        // message
+                        // last message
                         Text(
-                          'Ok!',
+                          lastMessage,
                           style: TextStyle(
                             color: appPrimary,
                             fontSize: 16,
@@ -68,7 +72,7 @@ class CustomUserTile extends StatelessWidget {
                 ),
                 // timestamp
                 Text(
-                  'Today, 12:25',
+                  timestamp,
                   style: TextStyle(
                     color: appPrimary,
                     fontWeight: FontWeight.w500,

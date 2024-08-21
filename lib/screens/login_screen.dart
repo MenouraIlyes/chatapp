@@ -27,7 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     // try login
     try {
-      await authService.signInwithEmailPassword(
+      await authService.signInWithEmailPassword(
           _emailController.text, _passwordController.text);
     } catch (e) {
       showDialog(

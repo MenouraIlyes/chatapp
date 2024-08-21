@@ -23,7 +23,9 @@ void main() async {
   noti.setupInteractions();
 
   // run app
-  runApp(const MyApp());
+  runApp(
+    const MyApp(),
+  );
 }
 
 class MyApp extends StatelessWidget {

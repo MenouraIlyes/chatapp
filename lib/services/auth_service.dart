@@ -12,7 +12,7 @@ class AuthService {
   }
 
   // sign in
-  Future<UserCredential> signInwithEmailPassword(
+  Future<UserCredential?> signInWithEmailPassword(
       String email, String password) async {
     try {
       // login
@@ -36,12 +36,19 @@ class AuthService {
 
       return userCredential;
     } on FirebaseAuthException catch (e) {
-      throw Exception(e.code);
+      switch (e.code) {
+        case 'weak-password':
+          throw Exception('Please provide a stronger password.');
+        case 'email-already-in-use':
+          throw Exception('Email address already in use.');
+        default:
+          throw Exception(e.code);
+      }
     }
   }
 
   // register
-  Future<User?> signUpInwithEmailPassword(
+  Future<UserCredential?> signUpInwithEmailPassword(
       String email, String password, String name) async {
     try {
       // Create User
@@ -55,11 +62,16 @@ class AuthService {
         'name': name,
       });
 
-      print(userCredential);
-
-      return userCredential.user;
+      return userCredential;
     } on FirebaseAuthException catch (e) {
-      throw Exception(e.code);
+      switch (e.code) {
+        case 'weak-password':
+          throw Exception('Please provide a stronger password.');
+        case 'email-already-in-use':
+          throw Exception('Email address already in use.');
+        default:
+          throw Exception(e.code);
+      }
     }
   }
 

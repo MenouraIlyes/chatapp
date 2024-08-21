@@ -1,4 +1,3 @@
-import 'package:chatapp/screens/home_screen.dart';
 import 'package:chatapp/services/auth_service.dart';
 import 'package:chatapp/shared/colors.dart';
 import 'package:chatapp/widgets/custom_button.dart';
@@ -34,22 +33,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_passwordController.text == _confirmPasswordController.text) {
       // password match
       try {
-        User? user = await authService.signUpInwithEmailPassword(
+        UserCredential? user = await authService.signUpInwithEmailPassword(
             _emailController.text,
             _passwordController.text,
             _nameController.text);
 
         if (user != null) {
-          // If the user is successfully sign up, navigate to HomePage
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const HomeScreen(),
-            ),
-            (route) => false,
-          );
+          Navigator.of(context).pop();
         } else {
-          // Show an error message if login failed
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Login failed. Please check your credentials.'),
