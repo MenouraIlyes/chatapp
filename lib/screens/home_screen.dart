@@ -25,6 +25,28 @@ class _HomeScreenState extends State<HomeScreen> {
   final ChatService _chatService = ChatService();
   final AuthService _authService = AuthService();
 
+  String? _userName;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentUser();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    final currentUser = _authService.getCurrentUser();
+    if (currentUser != null) {
+      // Fetch user data from Firestore
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(currentUser.uid)
+          .get();
+      setState(() {
+        _userName = userDoc['name'];
+      });
+    }
+  }
+
   Widget pageIndex(BuildContext context) {
     if (_page == 0) {
       return getBody(context);
@@ -204,8 +226,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         fontWeight: FontWeight.w400,
                       ),
                     ),
+
+                    // user name
                     Text(
-                      'Ilyes Menoura',
+                      _userName ?? 'Loading...',
                       style: TextStyle(
                         color: appWhite,
                         fontSize: 22,
