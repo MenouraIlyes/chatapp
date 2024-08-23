@@ -229,7 +229,7 @@ class ProfileScreen extends StatelessWidget {
                   onTap: () {},
                 ),
                 SizedBox(
-                  height: 200,
+                  height: 180,
                 ),
 
                 // logout button

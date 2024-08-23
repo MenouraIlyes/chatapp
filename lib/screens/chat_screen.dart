@@ -130,6 +130,8 @@ class _ChatScreenState extends State<ChatScreen> {
       child: CustomChatBubble(
         message: data['message'],
         isCurrentUser: isCurrentUser,
+        UserId: data['senderID'],
+        messageId: doc.id,
       ),
     );
   }

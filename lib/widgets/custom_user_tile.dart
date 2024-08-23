@@ -24,7 +24,7 @@ class CustomUserTile extends StatelessWidget {
         child: Container(
           height: 90,
           decoration: BoxDecoration(
-            color: appInversePrimary,
+            color: appWhite,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Padding(

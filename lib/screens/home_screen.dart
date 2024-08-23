@@ -1,3 +1,4 @@
+import 'package:chatapp/screens/blocked_users_screen.dart';
 import 'package:chatapp/screens/chat_screen.dart';
 import 'package:chatapp/screens/profile_screen.dart';
 import 'package:chatapp/services/auth_service.dart';
@@ -37,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // build a list of users except the current logged in user
   Widget _buildUserList(BuildContext context) {
     return StreamBuilder(
-      stream: _chatService.getUsersSteam(),
+      stream: _chatService.getUsersSteamExcludingBlocked(),
       builder: (context, snapshot) {
         // error
         if (snapshot.hasError) {
@@ -75,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (userData["email"] == null ||
         currentUserEmail == null ||
         userData["email"] == currentUserEmail) {
-      return Container(); // Return empty container if the user data or email is null or the current user
+      return Container();
     }
 
     return StreamBuilder<Map<String, dynamic>?>(
@@ -240,13 +241,22 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       textAlign: TextAlign.start,
                     ),
-                    Text(
-                      'Manage',
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w400,
-                          color: appSecondary),
-                      textAlign: TextAlign.start,
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BlockedUsersScreen(),
+                            ));
+                      },
+                      child: Text(
+                        'Manage',
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w400,
+                            color: appSecondary),
+                        textAlign: TextAlign.start,
+                      ),
                     ),
                   ],
                 ),
