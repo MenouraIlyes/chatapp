@@ -63,7 +63,9 @@ class BlockedUsersScreen extends StatelessWidget {
 
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(
-            child: CircularProgressIndicator(),
+            child: CircularProgressIndicator(
+              backgroundColor: appSecondary,
+            ),
           );
         }
 
@@ -105,7 +107,23 @@ class BlockedUsersScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        leading: GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Icon(
+            Icons.arrow_back_ios,
+            color: appWhite,
+          ),
+        ),
+        backgroundColor: appPrimary,
+        title: Text(
+          'Blocked Users',
+          style: TextStyle(
+            color: appWhite,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: getBody(),
     );
   }

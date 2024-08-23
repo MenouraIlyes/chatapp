@@ -20,6 +20,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
+  bool isLoading = false;
   String emailText = '';
   String nameText = '';
   String passwordText = '';
@@ -28,7 +29,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void register() async {
     // auth service
     final authService = AuthService();
-
+    setState(() {
+      isLoading = true;
+    });
     // try register
     if (_passwordController.text == _confirmPasswordController.text) {
       // password match
@@ -55,6 +58,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         );
       }
+      setState(() {
+        isLoading = false;
+      });
     } else {
       // password doesn't match
       showDialog(
@@ -170,11 +176,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
+    return Stack(children: [
+      Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+        ),
+        body: getBody(),
       ),
-      body: getBody(),
-    );
+      if (isLoading)
+        Container(
+          color: Colors.black.withOpacity(0.5),
+          child: Center(
+            child: CircularProgressIndicator(
+              backgroundColor: appSecondary,
+            ),
+          ),
+        ),
+    ]);
   }
 }

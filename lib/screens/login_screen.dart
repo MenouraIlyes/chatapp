@@ -16,6 +16,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool isLoading = false;
 
   String emailText = '';
   String passwordText = '';
@@ -24,7 +25,9 @@ class _LoginScreenState extends State<LoginScreen> {
   void login() async {
     // auth service
     final authService = AuthService();
-
+    setState(() {
+      isLoading = true;
+    });
     // try login
     try {
       await authService.signInWithEmailPassword(
@@ -37,6 +40,9 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
     }
+    setState(() {
+      isLoading = false;
+    });
   }
 
   Widget getBody() {
@@ -127,8 +133,20 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
-      body: getBody(),
+      body: Stack(
+        children: [
+          Center(child: getBody()),
+          if (isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: Center(
+                child: CircularProgressIndicator(
+                  backgroundColor: appSecondary,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
