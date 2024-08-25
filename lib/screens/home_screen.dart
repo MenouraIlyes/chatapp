@@ -1,172 +1,84 @@
+import 'package:chatapp/providers/last_message_provider.dart';
+import 'package:chatapp/providers/user_data_provider.dart';
 import 'package:chatapp/screens/blocked_users_screen.dart';
 import 'package:chatapp/screens/chat_screen.dart';
 import 'package:chatapp/screens/profile_screen.dart';
-import 'package:chatapp/services/auth_service.dart';
-import 'package:chatapp/services/chat_service.dart';
 import 'package:chatapp/shared/colors.dart';
+import 'package:chatapp/widgets/custom_placeholder.dart';
 import 'package:chatapp/widgets/custom_search_bar.dart';
 import 'package:chatapp/widgets/custom_user_tile.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:chatapp/providers/user_provider.dart';
+import 'package:chatapp/providers/chat_service_provider.dart';
 
-class HomeScreen extends StatefulWidget {
+final pageIndexProvider = StateProvider<int>((ref) => 0);
+
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userDataSnapshot = ref.watch(userDataProvider);
+    final pageIndex = ref.watch(pageIndexProvider);
 
-class _HomeScreenState extends State<HomeScreen> {
-  int _page = 0;
+    String? userName;
+    String? imageUrl;
+    bool isLoading = userDataSnapshot.isLoading;
 
-  // chat & auth service
-  final ChatService _chatService = ChatService();
-  final AuthService _authService = AuthService();
-
-  String? _userName;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCurrentUser();
-  }
-
-  Future<void> _loadCurrentUser() async {
-    final currentUser = _authService.getCurrentUser();
-    if (currentUser != null) {
-      // Fetch user data from Firestore
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('Users')
-          .doc(currentUser.uid)
-          .get();
-      setState(() {
-        _userName = userDoc['name'];
-      });
+    if (!isLoading && userDataSnapshot.value != null) {
+      final userData = userDataSnapshot.value!.data();
+      userName = userData?['name'];
+      imageUrl = userData?['profilePicture'];
     }
-  }
 
-  Widget pageIndex(BuildContext context) {
-    if (_page == 0) {
-      return getBody(context);
-    } else if (_page == 1) {
-      return ProfileScreen();
-    } else {
-      return Container();
-    }
-  }
-
-  // build a list of users except the current logged in user
-  Widget _buildUserList(BuildContext context) {
-    return StreamBuilder(
-      stream: _chatService.getUsersSteamExcludingBlocked(),
-      builder: (context, snapshot) {
-        // error
-        if (snapshot.hasError) {
-          return Text("Error");
-        }
-
-        // loading
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
-              child: CircularProgressIndicator(
-            color: appSecondary,
-          ));
-        }
-
-        // return list view
-        return ListView(
-          padding: EdgeInsets.zero,
-          children: snapshot.data!
-              .map<Widget>(
-                (userData) =>
-                    _buildUserListItem(userData, context, _authService),
-              )
-              .toList(),
-        );
-      },
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+      ),
+      bottomNavigationBar: CurvedNavigationBar(
+        height: 60,
+        backgroundColor: appSecondary,
+        color: appWhite,
+        buttonBackgroundColor: appWhite,
+        items: <Widget>[
+          Icon(
+            Icons.chat,
+            size: 30,
+            color: appPrimary,
+          ),
+          Icon(
+            Icons.person,
+            size: 30,
+            color: appPrimary,
+          ),
+        ],
+        onTap: (index) {
+          ref.read(pageIndexProvider.notifier).state = index;
+        },
+      ),
+      body: _buildPage(pageIndex, ref, context, userName, imageUrl, isLoading),
     );
   }
 
-  // individual list tile for each user
-  Widget _buildUserListItem(Map<String, dynamic> userData, BuildContext context,
-      AuthService authService) {
-    final currentUserEmail = authService.getCurrentUser()?.email;
-
-    // Skip if the user data or email is null or the user is the current user
-    if (userData["email"] == null ||
-        currentUserEmail == null ||
-        userData["email"] == currentUserEmail) {
-      return Container();
+  Widget _buildPage(int pageIndex, WidgetRef ref, BuildContext context,
+      String? userName, String? imageUrl, bool isLoading) {
+    switch (pageIndex) {
+      case 1:
+        return ProfileScreen();
+      case 0:
+      default:
+        return _buildChatScreen(context, ref, userName, imageUrl, isLoading);
     }
-
-    return StreamBuilder<Map<String, dynamic>?>(
-      stream: _chatService.getLastMessageStream(
-          authService.getCurrentUser()!.uid, userData['uid']),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return CustomUserTile(
-            username: userData['name'] ?? 'Unknown User',
-            lastMessage: 'Loading...',
-            timestamp: '',
-            onTap: () {},
-          );
-        }
-
-        if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
-          return CustomUserTile(
-            username: userData['name'] ?? 'Unknown User',
-            lastMessage: 'No messages yet',
-            timestamp: '',
-            onTap: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ChatScreen(
-                      receiverEmail: userData['email'],
-                      receiverID: userData['uid'],
-                      receiverName: userData['name'],
-                    ),
-                  ));
-            },
-          );
-        }
-
-        // Extract last message and timestamp from the snapshot
-        Map<String, dynamic>? lastMessageData = snapshot.data;
-        String lastMessage = lastMessageData?['message'] ?? 'No messages yet';
-        String formattedTimestamp = '';
-
-        if (lastMessageData?['timestamp'] != null) {
-          final DateTime date =
-              (lastMessageData!['timestamp'] as Timestamp).toDate();
-          formattedTimestamp = DateFormat('EEEE, HH:mm').format(date);
-        }
-
-        return CustomUserTile(
-          onTap: () {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ChatScreen(
-                    receiverEmail: userData['email'],
-                    receiverID: userData['uid'],
-                    receiverName: userData['name'],
-                  ),
-                ));
-          },
-          username: userData['name'] ?? 'Unknown User',
-          lastMessage: lastMessage,
-          timestamp: formattedTimestamp.isNotEmpty
-              ? formattedTimestamp
-              : 'No timestamp',
-        );
-      },
-    );
   }
 
-  Widget getBody(BuildContext context) {
+  Widget _buildChatScreen(BuildContext context, WidgetRef ref, String? userName,
+      String? imageUrl, bool isLoading) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -201,13 +113,32 @@ class _HomeScreenState extends State<HomeScreen> {
                   top: 50,
                   left: 20,
                 ),
-                child: Container(
-                  height: 80,
-                  width: 80,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(100),
-                    child: Image.asset('assets/images/default_pfp.png'),
-                  ),
+                child: Stack(
+                  children: [
+                    Container(
+                      height: 100,
+                      width: 100,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(100),
+                        child: imageUrl != null && imageUrl.isNotEmpty
+                            ? Image.network(imageUrl)
+                            : Image.asset('assets/images/default_pfp.png'),
+                      ),
+                    ),
+                    if (isLoading)
+                      Container(
+                        height: 100,
+                        width: 100,
+                        decoration: BoxDecoration(
+                          color: Colors.black45,
+                          borderRadius: BorderRadius.circular(100),
+                        ),
+                        child: const CircularProgressIndicator(
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      ),
+                  ],
                 ),
               ),
               SizedBox(
@@ -222,17 +153,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       'Good morning',
                       style: TextStyle(
                         color: appWhite,
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
 
                     // user name
                     Text(
-                      _userName ?? 'Loading...',
+                      userName ?? 'Loading...',
                       style: TextStyle(
                         color: appWhite,
-                        fontSize: 22,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -242,7 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           Padding(
-            padding: const EdgeInsets.only(top: 160, right: 20, left: 20),
+            padding: const EdgeInsets.only(top: 170, right: 20, left: 20),
             child: CustomSearchBar(
               hintField: 'Search',
               backgroundColor: appWhite,
@@ -287,7 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 SizedBox(
                   height: 10,
                 ),
-                Expanded(child: _buildUserList(context)),
+                Expanded(child: _buildUserList(context, ref)),
               ],
             ),
           ),
@@ -296,39 +227,122 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
+  Widget _buildUserList(BuildContext context, WidgetRef ref) {
+    final chatService = ref.watch(chatServiceProvider);
+    final user = ref.watch(userProvider).asData?.value;
+
+    return StreamBuilder(
+      stream: chatService.getUsersSteamExcludingBlocked(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Text("Error");
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return ListView.builder(
+            padding: EdgeInsets.zero,
+            itemCount: 8, // Number of placeholder items
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Row(
+                  children: [
+                    // Placeholder for profile picture
+                    CustomPlaceholder(
+                      height: 60,
+                      width: 60,
+                      borderRadius: 30,
+                    ),
+                    const SizedBox(width: 16),
+                    // Placeholder for text and timestamp
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CustomPlaceholder(
+                            height: 20,
+                            width: 150,
+                          ),
+                          const SizedBox(height: 8),
+                          CustomPlaceholder(
+                            height: 16,
+                            width: 100,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        }
+
+        return ListView(
+          padding: EdgeInsets.zero,
+          children: snapshot.data!
+              .map<Widget>(
+                (userData) => _buildUserListItem(userData, context, ref),
+              )
+              .toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildUserListItem(
+      Map<String, dynamic> userData, BuildContext context, WidgetRef ref) {
+    final currentUserEmail = ref.watch(userProvider).asData?.value?.email;
+
+    if (userData["email"] == null ||
+        currentUserEmail == null ||
+        userData["email"] == currentUserEmail) {
+      return Container();
+    }
+
+    final lastMessageSnapshot = ref.watch(lastMessageProvider(userData['uid']));
+
+    return lastMessageSnapshot.when(
+      data: (lastMessageData) {
+        String lastMessage = lastMessageData?['message'] ?? 'No messages yet';
+        String formattedTimestamp = '';
+
+        if (lastMessageData?['timestamp'] != null) {
+          formattedTimestamp = DateFormat('EEEE, HH:mm')
+              .format(lastMessageData!['timestamp'].toDate());
+        }
+
+        return CustomUserTile(
+          username: userData['name'] ?? 'Unknown User',
+          lastMessage: lastMessage,
+          timestamp: formattedTimestamp,
+          profilePicture: userData['profilePicture'],
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ChatScreen(
+                  receiverEmail: userData['email'],
+                  receiverID: userData['uid'],
+                  receiverName: userData['name'],
+                ),
+              ),
+            );
+          },
+        );
+      },
+      loading: () => CustomUserTile(
+        username: userData['name'] ?? 'Unknown User',
+        lastMessage: 'Loading...',
+        timestamp: '',
+        onTap: () {},
       ),
-      bottomNavigationBar: CurvedNavigationBar(
-        height: 60,
-        backgroundColor: appSecondary,
-        color: appWhite,
-        buttonBackgroundColor: appWhite,
-        items: <Widget>[
-          Icon(
-            Icons.chat,
-            size: 30,
-            color: appPrimary,
-          ),
-          Icon(
-            Icons.person,
-            size: 30,
-            color: appPrimary,
-          ),
-        ],
-        onTap: (index) {
-          setState(() {
-            _page = index;
-          });
-        },
+      error: (_, __) => CustomUserTile(
+        username: userData['name'] ?? 'Unknown User',
+        lastMessage: 'Error loading message',
+        timestamp: '',
+        onTap: () {},
       ),
-      body: pageIndex(context),
     );
   }
 }

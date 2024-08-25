@@ -30,7 +30,7 @@ class AuthService {
         _firestore.collection("Users").doc(userCredential.user!.uid).set({
           'uid': userCredential.user!.uid,
           'email': userCredential.user!.email,
-          'name': 'test',
+          'name': '',
         });
       }
 
@@ -60,6 +60,7 @@ class AuthService {
         'uid': userCredential.user!.uid,
         'email': userCredential.user!.email,
         'name': name,
+        'profilePicture': '',
       });
 
       return userCredential;

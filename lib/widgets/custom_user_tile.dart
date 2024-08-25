@@ -6,6 +6,7 @@ class CustomUserTile extends StatelessWidget {
   final void Function()? onTap;
   final String lastMessage;
   final String timestamp;
+  final String? profilePicture;
 
   const CustomUserTile({
     super.key,
@@ -13,6 +14,7 @@ class CustomUserTile extends StatelessWidget {
     required this.onTap,
     this.lastMessage = '',
     this.timestamp = '',
+    this.profilePicture,
   });
 
   @override
@@ -37,7 +39,9 @@ class CustomUserTile extends StatelessWidget {
                   width: 50,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(100),
-                    child: Image.asset('assets/images/default_pfp.png'),
+                    child: profilePicture != ''
+                        ? Image.network(profilePicture!)
+                        : Image.asset('assets/images/default_pfp.png'),
                   ),
                 ),
                 SizedBox(width: 10),
