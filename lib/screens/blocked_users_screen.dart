@@ -87,6 +87,7 @@ class BlockedUsersScreen extends StatelessWidget {
                 _confirmUnblock(context, user['uid']);
               },
               username: user['name'],
+              profilePicture: user['profilePicture'],
             );
           },
         );

@@ -1,4 +1,5 @@
 import 'package:chatapp/providers/last_message_provider.dart';
+import 'package:chatapp/providers/page_index_provider.dart';
 import 'package:chatapp/providers/user_data_provider.dart';
 import 'package:chatapp/screens/blocked_users_screen.dart';
 import 'package:chatapp/screens/chat_screen.dart';
@@ -13,8 +14,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:chatapp/providers/user_provider.dart';
 import 'package:chatapp/providers/chat_service_provider.dart';
-
-final pageIndexProvider = StateProvider<int>((ref) => 0);
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});

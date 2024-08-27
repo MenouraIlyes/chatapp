@@ -64,6 +64,8 @@ class CustomUserTile extends StatelessWidget {
                         // last message
                         Text(
                           lastMessage,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: appPrimary,
                             fontSize: 16,
